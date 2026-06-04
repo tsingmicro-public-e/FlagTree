@@ -33,6 +33,7 @@ from .distributed import (
     shard_id,
     sharding,
 )
+from . import communication
 from .communication import get_mem_pool, create_comm_tensor, cleanup_communicator
 
 __all__ = [
