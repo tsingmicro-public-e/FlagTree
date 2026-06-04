@@ -727,12 +727,12 @@ def _create_remote_pointers_tensor(
         dtype = dtype
     else:
         dtype = tensor.dtype.element_ty if dtype is None else dtype
-        
+
     remote_ptr_dtype = tl.pointer_type(*{
         "cluster": (dtype, 7),
         "device": (dtype, 1),
     }.get(space))
-    
+
     if tensor.type.is_block():
         remote_type = tl.block_type(remote_ptr_dtype, list(tensor.shape)).to_ir(builder)
     else:
@@ -744,15 +744,16 @@ def _create_remote_pointers_tensor(
     return tl.tensor(remote_op.get_result(0), remote_ptr_dtype)
 
 
-def _check_cluster_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, ...] | list[int], scope: device_mesh | None) -> None:
+def _check_cluster_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, ...] | list[int],
+                                  scope: device_mesh | None) -> None:
     if not isinstance(tensor, tl.tensor):
         raise TypeError(f"tensor must be tl.tensor, got {type(tensor).__name__}")
     if not tensor.dtype.is_ptr():
         raise TypeError(f"{tensor.dtype}, cluster remote pointer internal path requires a pointer tensor")
 
     if tensor.dtype.address_space == 7:
-    # Pointer is already in cluster-shared space. Preserve compatibility
-    # for existing callsites that re-annotate with shard_id=0.
+        # Pointer is already in cluster-shared space. Preserve compatibility
+        # for existing callsites that re-annotate with shard_id=0.
         if isinstance(shard_id, (int, tuple, list)):
             linear_shard_id = _normalize_compile_time_remote_shard_id(shard_id, scope)
             if linear_shard_id == 0:
@@ -762,14 +763,18 @@ def _check_cluster_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, 
     if tensor.dtype.address_space != 3:
         raise TypeError(f"{tensor.dtype}, cluster remote pointer internal path requires cluster-shared pointers "
                         "(addrspace=7)")
-    
-def _check_device_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, ...] | list[int], scope: device_mesh | None) -> None:
+
+
+def _check_device_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, ...] | list[int],
+                                 scope: device_mesh | None) -> None:
     ...
 
 
-def _check_node_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, ...] | list[int], scope: device_mesh | None) -> None:
+def _check_node_remote_pointer(tensor: tl.tensor, shard_id: int | tuple[int, ...] | list[int],
+                               scope: device_mesh | None) -> None:
     ...
-    
+
+
 def _remote_pointer(
     tensor: tl.tensor,
     shard_id,
@@ -780,7 +785,7 @@ def _remote_pointer(
 ) -> tl.tensor:
     space = tl._unwrap_if_constexpr(space)
     {
-        "cluster":_check_cluster_remote_pointer,
+        "cluster": _check_cluster_remote_pointer,
         "device": _check_device_remote_pointer,
         "node": _check_node_remote_pointer,
     }[space](tensor, shard_id, scope)

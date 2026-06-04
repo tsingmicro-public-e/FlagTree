@@ -13,8 +13,8 @@
 
 namespace mlir::triton::tle {
 
-namespace RemotePointers{
-    llvm::LogicalResult verifyDeviceSpace(mlir::Value src, mlir::Value result);
+namespace RemotePointers {
+llvm::LogicalResult verifyDeviceSpace(mlir::Value src, mlir::Value result);
 }
 
-}
+} // namespace mlir::triton::tle

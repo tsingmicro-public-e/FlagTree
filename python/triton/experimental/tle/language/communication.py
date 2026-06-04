@@ -2,7 +2,7 @@ try:
     from .flagcx_wrapper import (
         FLAGCXLibrary,
         flagcxDevCommRequirements,
-        flagcxUniqueId,
+        flagcxUniqueId,  # noqa: F401
         FLAGCX_WIN_COLL_SYMMETRIC,
     )
     import os
@@ -22,10 +22,8 @@ if enabled:
         str(Path.home() / ".flagtree" / "flagcx"),
     )
 
-    FLAGCX_INCLUDE_PATH = os.environ.get(
-        "FLAGCX_INCLUDE_PATH",
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "include"))
-    )
+    FLAGCX_INCLUDE_PATH = os.environ.get("FLAGCX_INCLUDE_PATH",
+                                         os.path.abspath(os.path.join(os.path.dirname(__file__), "include")))
 
     def _libflagcx_path():
         return Path(FLAGCX_LIB_PATH) / "libflagcx.so"
@@ -40,11 +38,9 @@ if enabled:
         global _mem_pool
         _mem_pool = None
 
-
     def _cleanup_flagcx_allocator_wrapper():
         global _allocator_wrapper
         _allocator_wrapper = None
-
 
     import atexit
     atexit.register(_cleanup_flagcx_mem_pool)
@@ -73,7 +69,6 @@ if enabled:
 
     }
     """
-        
 
 
 def compile_flagcx_allocator():
@@ -87,8 +82,7 @@ def compile_flagcx_allocator():
             name=lib_name,
             cpp_sources=flagcx_allocator_source,
             with_cuda=True,
-            extra_ldflags=[f"-L{FLAGCX_LIB_PATH}", "-lflagcx",
-                           f"-Wl,-rpath,{FLAGCX_LIB_PATH}"],
+            extra_ldflags=[f"-L{FLAGCX_LIB_PATH}", "-lflagcx", f"-Wl,-rpath,{FLAGCX_LIB_PATH}"],
             verbose=False,
             is_python_module=False,
             build_directory=out_dir,
@@ -103,15 +97,13 @@ def compile_flagcx_allocator():
         _allocator = _allocator_wrapper.allocator()
     except Exception as e:
         _flagcx_allocator_failed_to_compile = True
-        print(
-            f"[WARNING] Failed to compile FlagCX memory allocator: {e}\n"
-            f"  Ensure FLAGCX_LIB_PATH ({FLAGCX_LIB_PATH}) contains libflagcx.so\n"
-            f"  and FLAGCX_INCLUDE_PATH ({FLAGCX_INCLUDE_PATH}) contains flagcx.h"
-        )
+        print(f"[WARNING] Failed to compile FlagCX memory allocator: {e}\n"
+              f"  Ensure FLAGCX_LIB_PATH ({FLAGCX_LIB_PATH}) contains libflagcx.so\n"
+              f"  and FLAGCX_INCLUDE_PATH ({FLAGCX_INCLUDE_PATH}) contains flagcx.h")
+
 
 def get_mem_pool():
     init_communicator()
-
     """Return a cached PyTorch MemPool backed by flagcxMemAlloc."""
     global _mem_pool, _flagcx_allocator_failed_to_compile
     if _mem_pool is None and not _flagcx_allocator_failed_to_compile:
@@ -177,15 +169,15 @@ def init_communicator():
     comm = flagcx.flagcxCommInitRank(world_size, unique_id, rank)
     print(f"[Rank {rank}] FlagCX comm initialized")
     _init_communicator_ = True
-    
+
+
 def create_comm_tensor(buf_tensor):
     global comm, rank, dev_mem, dev_comm, win
     buf_ptr = buf_tensor.data_ptr()
     buf_size = buf_tensor.numel() * buf_tensor.element_size()
 
     # Register buffer with symmetric window for LSA
-    win = flagcx.flagcxCommWindowRegister(comm, buf_ptr, buf_size,
-                                           flags=FLAGCX_WIN_COLL_SYMMETRIC)
+    win = flagcx.flagcxCommWindowRegister(comm, buf_ptr, buf_size, flags=FLAGCX_WIN_COLL_SYMMETRIC)
     print(f"[Rank {rank}] Window registered (symmetric)")
 
     # Create DevComm with 1 intra barrier
@@ -214,8 +206,6 @@ def create_comm_tensor(buf_tensor):
     print(f"[Rank {rank}] Device pointers: comm={dev_comm_dptr.value:#x}, "
           f"mem={dev_mem_dptr.value:#x}")
 
-
     # Synchronize all ranks before kernel launch
     dist.barrier()
     return dev_mem_dptr.value
-    

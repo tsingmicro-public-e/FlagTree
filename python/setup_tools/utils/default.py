@@ -5,7 +5,9 @@ import shutil
 
 global registrar
 
+
 class FlagCXRegistrar:
+
     def __init__(self, external):
         self.bitcode_name = "libflagcx_device.bc"
         self.shared_lib_name = "libflagcx.so"
@@ -17,7 +19,7 @@ class FlagCXRegistrar:
         flagtree_config = external['configs']
         self.flagcx_src_dir = submodule.dst_path
         self.flagtree_dir = flagtree_config.flagtree_root_dir
-        self.src_lib_dir = Path(self.flagcx_src_dir) / "build" / "lib" 
+        self.src_lib_dir = Path(self.flagcx_src_dir) / "build" / "lib"
         self.cache_lib_dir = Path(flagtree_cache.dir_path) / "flagcx"
         flagtree_cache._create_subdir(subdir_name="flagcx")
         for lib_name in (self.bitcode_name, self.shared_lib_name):
@@ -26,12 +28,11 @@ class FlagCXRegistrar:
             setattr(self, f"{lib_name.split('.')[0]}_src_path", src_path)
             setattr(self, f"{lib_name.split('.')[0]}_cache_path", cache_path)
 
-    
     def get_compile_cmds(self):
         nproc = os.cpu_count()
         return {
-           self.bitcode_name : ["make", "-C", "bindings/ir/nvidia"],
-           self.shared_lib_name : ["make", "-j", str(nproc)]
+            self.bitcode_name: ["make", "-C", "bindings/ir/nvidia"], self.shared_lib_name: ["make", "-j",
+                                                                                            str(nproc)]
         }
 
     def _compile_and_cache(self):
@@ -60,12 +61,11 @@ class FlagCXRegistrar:
         shutil.copy(src, dst)
         print(f"\033[32mflagcx_wrapper.py copied from {src} to {dst}\033[0m")
         dst = Path(self.flagtree_dir) / "python" / "triton" / "experimental" / "tle" / "language" / "include"
-        src = Path(self.flagcx_src_dir) / "flagcx" / "include" 
+        src = Path(self.flagcx_src_dir) / "flagcx" / "include"
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(src, dst)
         print(f"\033[32mFlagCX headers copied from {src} to {dst}\033[0m")
-
 
     def run(self):
         self._compile_and_cache()
@@ -76,4 +76,3 @@ def handle_flagcx(*args, **kwargs):
     global registrar
     registrar = FlagCXRegistrar(kwargs)
     registrar.run()
-

@@ -374,11 +374,7 @@ LogicalResult lowerDeviceSpace(Location loc, ValueRange srcElems,
   auto ctx = rewriter.getContext();
   auto ptrTy = LLVM::LLVMPointerType::get(ctx, 1);
 
-  Value comm_dev_ptr = rewriter.create<LLVM::IntToPtrOp>(
-        loc,
-        ptrTy,
-        memPtr
-  );
+  Value comm_dev_ptr = rewriter.create<LLVM::IntToPtrOp>(loc, ptrTy, memPtr);
 
   auto isGlobalAddrSpace = [&](auto ptrTy) -> bool {
     auto addrSpace = ptrTy.getAddressSpace();
