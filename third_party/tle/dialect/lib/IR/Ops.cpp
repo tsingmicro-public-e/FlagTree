@@ -11,6 +11,7 @@
 
 #include "triton/Dialect/TritonGPU/IR/Dialect.h"
 #include "triton/Dialect/TritonGPU/IR/LinearLayoutConversions.h"
+#include "tle/dialect/include/IR/VerfiyUtils.h"
 
 namespace mlir::triton::tle {
 
@@ -719,9 +720,15 @@ LogicalResult DistributedBarrierOp::verify() {
   return success();
 }
 
+
+
 LogicalResult RemotePointersOp::verify() {
   Type srcTy = getSrc().getType();
   Type resultTy = getResult().getType();
+  auto spaceAttr = getSpace();
+  if (spaceAttr == "device")
+    return RemotePointers::verifyDeviceSpace(getSrc(), getResult());
+  
   auto getPtrInfo = [&](Type ty, triton::PointerType &ptr, bool &isTensor,
                         ArrayRef<int64_t> &shape,
                         Attribute &encoding) -> LogicalResult {
@@ -774,10 +781,12 @@ LogicalResult RemotePointersOp::verify() {
     return emitOpError() << "expects src/result pointer pointee types to "
                             "match";
 
-  if (srcPtrTy.getAddressSpace() != kSharedMemoryAddressSpace)
+  if (spaceAttr == "cluster" &&
+      srcPtrTy.getAddressSpace() != kSharedMemoryAddressSpace)
     return emitOpError()
            << "expects src pointers to live in shared memory (addrspace=3)";
-  if (resultPtrTy.getAddressSpace() != kClusterSharedMemoryAddressSpace)
+  if (spaceAttr == "cluster" &&
+      resultPtrTy.getAddressSpace() != kClusterSharedMemoryAddressSpace)
     return emitOpError()
            << "expects result pointers to live in cluster shared memory "
               "(addrspace=7)";
